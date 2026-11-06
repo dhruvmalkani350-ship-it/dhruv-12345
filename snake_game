@@ -1,0 +1,217 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <conio.h>
+#include <windows.h>
+#include <time.h>
+
+#define WIDTH 20
+#define HEIGHT 20
+
+int snakeX[400], snakeY[400];
+int length = 3;
+int foodX, foodY;
+int score = 0;
+int gameOver = 0;
+
+char direction = 'D';
+
+// Generate food at a random position
+void createFood()
+{
+    int i, valid;
+
+    do
+    {
+        valid = 1;
+        foodX = rand() % WIDTH;
+        foodY = rand() % HEIGHT;
+
+        for (i = 0; i < length; i++)
+        {
+            if (snakeX[i] == foodX &&
+                snakeY[i] == foodY)
+            {
+                valid = 0;
+                break;
+            }
+        }
+
+    } while (!valid);
+}
+
+// Initialize the game
+void setup()
+{
+    int i;
+
+    length = 3;
+    score = 0;
+    gameOver = 0;
+    direction = 'D';
+
+    for (i = 0; i < length; i++)
+    {
+        snakeX[i] = 10 - i;
+        snakeY[i] = 10;
+    }
+
+    createFood();
+}
+
+// Take keyboard input
+void input()
+{
+    if (_kbhit())
+    {
+        char key = _getch();
+
+        if ((key == 'w' || key == 'W') &&
+            direction != 'S')
+            direction = 'W';
+
+        else if ((key == 's' || key == 'S') &&
+                 direction != 'W')
+            direction = 'S';
+
+        else if ((key == 'a' || key == 'A') &&
+                 direction != 'D')
+            direction = 'A';
+
+        else if ((key == 'd' || key == 'D') &&
+                 direction != 'A')
+            direction = 'D';
+
+        else if (key == 'q' || key == 'Q')
+            gameOver = 1;
+    }
+}
+
+// Update snake position
+void update()
+{
+    int i;
+    int newX = snakeX[0];
+    int newY = snakeY[0];
+    int eating;
+
+    if (direction == 'W')
+        newY--;
+    else if (direction == 'S')
+        newY++;
+    else if (direction == 'A')
+        newX--;
+    else if (direction == 'D')
+        newX++;
+
+    eating = (newX == foodX && newY == foodY);
+
+    // Check wall collision
+    if (newX < 0 || newX >= WIDTH ||
+        newY < 0 || newY >= HEIGHT)
+    {
+        gameOver = 1;
+        return;
+    }
+
+    // Check collision with snake body
+    for (i = 0; i < length; i++)
+    {
+        if (snakeX[i] == newX &&
+            snakeY[i] == newY)
+        {
+            gameOver = 1;
+            return;
+        }
+    }
+
+    // Increase length after eating food
+    if (eating)
+    {
+        length++;
+        score += 10;
+    }
+
+    // Move the snake body
+    for (i = length - 1; i > 0; i--)
+    {
+        snakeX[i] = snakeX[i - 1];
+        snakeY[i] = snakeY[i - 1];
+    }
+
+    snakeX[0] = newX;
+    snakeY[0] = newY;
+
+    if (eating)
+        createFood();
+}
+
+// Display game screen
+void draw()
+{
+    int x, y, i;
+
+    system("cls");
+
+    printf("========== SNAKE GAME ==========\n");
+    printf("Score: %d\n", score);
+    printf("Controls: W=Up A=Left S=Down D=Right\n");
+    printf("Press Q to Quit\n\n");
+
+    for (y = 0; y < HEIGHT; y++)
+    {
+        for (x = 0; x < WIDTH; x++)
+        {
+            if (x == snakeX[0] && y == snakeY[0])
+                printf("O ");
+            else if (x == foodX && y == foodY)
+                printf("* ");
+            else
+            {
+                int found = 0;
+
+                for (i = 1; i < length; i++)
+                {
+                    if (snakeX[i] == x &&
+                        snakeY[i] == y)
+                    {
+                        printf("o ");
+                        found = 1;
+                        break;
+                    }
+                }
+
+                if (!found)
+                    printf(". ");
+            }
+        }
+
+        printf("\n");
+    }
+}
+
+// Main function
+int main()
+{
+    srand((unsigned int)time(NULL));
+
+    setup();
+
+    while (!gameOver)
+    {
+        draw();
+        input();
+        update();
+        Sleep(150);
+    }
+
+    system("cls");
+
+    printf("\n========== GAME OVER ==========\n");
+    printf("Final Score: %d\n", score);
+    printf("Thank you for playing!\n");
+
+    printf("\nPress any key to exit...");
+    _getch();
+
+    return 0;
+}
